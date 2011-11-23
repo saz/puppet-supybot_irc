@@ -3,9 +3,9 @@ require 'yaml'
 require 'json'
 
 begin
-  require 'carrier-pigeon'
+  require 'xmlrpc/client'
 rescue LoadError => e
-  Puppet.info "You need the `carrier-pigeon` gem to use the IRC report"
+  Puppet.info "You need `xmlrpc/client` installed to use the IRC report"
 end
 
 unless Puppet.version >= '2.6.5'
@@ -17,8 +17,9 @@ Puppet::Reports.register_report(:irc) do
   configfile = File.join([File.dirname(Puppet.settings[:config]), "irc.yaml"])
   raise(Puppet::ParseError, "IRC report config file #{configfile} not readable") unless File.exist?(configfile)
   config = YAML.load_file(configfile)
-  IRC_SERVER   = config[:irc_server]
-  IRC_SSL      = config[:irc_ssl]
+  IRC_CMD_HOST = config[:irc_cmd_host]
+  IRC_CHANNEL  = config[:irc_channel]
+  IRC_NET      = config[:irc_net]
   GITHUB_USER  = config[:github_user]
   GITHUB_TOKEN = config[:github_token]
 
@@ -33,21 +34,20 @@ Puppet::Reports.register_report(:irc) do
         output << log
       end
 
+      message = "Puppet run for #{self.host} #{self.status} at #{Time.now.asctime}."
       if GITHUB_USER && GITHUB_TOKEN
         gist_id = gist(self.host,output)
-        message = "Puppet run for #{self.host} #{self.status} at #{Time.now.asctime}. Created a Gist showing the output at https://gist.github.com/#{gist_id}"
-      else
-        Puppet.info "No GitHub credentials provided in irc.yaml - cannot create Gist with log output."
-        message = "Puppet run for #{self.host} #{self.status} at #{Time.now.asctime}."
+        message = "#{message} Created a Gist showing the output at https://gist.github.com/#{gist_id}"
       end
 
       begin
         timeout(8) do
           Puppet.debug "Sending status for #{self.host} to IRC."
-          CarrierPigeon.send(:uri => "#{IRC_SERVER}", :message => "#{message}", :ssl => IRC_SSL)
+          server = XMLRPC::Client.new2(IRC_CMD_HOST)
+          server.call('privmsg', IRC_NET, IRC_CHANNEL, message)
         end
       rescue Timeout::Error
-         Puppet.error "Failed to send report to #{IRC_SERVER} retrying..."
+         Puppet.error "Failed to send report to #{IRC_CMD_HOST} retrying..."
          max_attempts -= 1
          retry if max_attempts > 0
       end

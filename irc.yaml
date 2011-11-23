@@ -1,6 +1,7 @@
 ---
-:irc_server: 'irc://puppetbot:password@irc.freenode.net:6667#channel'
-:irc_ssl: false
-:github_token: 'token'
-:github_user: 'user'
+:irc_cmd_host: 'http://supybot.example.com:7766/'
+:irc_channel: '#system'
+:irc_net: 'YOURnet'
+#:github_token: 'token'
+#:github_user: 'user'
 
