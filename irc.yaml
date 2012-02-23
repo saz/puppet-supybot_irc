@@ -1,7 +1,7 @@
 ---
-:irc_cmd_host: 'http://supybot.example.com:7766/'
+:irc_cmd_host: 'http://irc.nbg1.kwick.de:7766/'
 :irc_channel: '#system'
-:irc_net: 'YOURnet'
+:irc_net: 'KWICKnet'
 #:github_token: 'token'
 #:github_user: 'user'
 
